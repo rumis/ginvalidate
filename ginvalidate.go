@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mitchellh/mapstructure"
 	"github.com/rumis/govalidate"
 )
 
@@ -37,7 +36,7 @@ func BindJsonStruct(c *gin.Context, rules map[string]govalidate.FilterItem, obj 
 	if err != nil {
 		return 0, err
 	}
-	err = mapstructure.Decode(res, obj)
+	err = mapDecode(res, obj)
 	if err != nil {
 		return 0, err
 	}
@@ -67,7 +66,7 @@ func BindQueryStruct(c *gin.Context, rules map[string]govalidate.FilterItem, obj
 	if err != nil {
 		return 0, err
 	}
-	err = mapstructure.Decode(res, obj)
+	err = mapDecode(res, obj)
 	if err != nil {
 		return 0, err
 	}
