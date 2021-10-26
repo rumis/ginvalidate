@@ -6,11 +6,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rumis/govalidate"
+	"github.com/rumis/govalidate/validator"
 )
 
 // BindJsonMap 解析请求参数
 // Content-type:application/json
-func BindJsonMap(c *gin.Context, rules map[string]govalidate.FilterItem) (map[string]interface{}, int32, error) {
+func BindJsonMap(c *gin.Context, rules map[string]validator.FilterItem) (map[string]interface{}, int32, error) {
 	if c.ContentType() != "application/json" {
 		return nil, 0, errors.New("不支持的Content-Type")
 	}
@@ -31,7 +32,7 @@ func BindJsonMap(c *gin.Context, rules map[string]govalidate.FilterItem) (map[st
 
 // BindJsonStruct 返回值为对象
 // Content-type:application/json
-func BindJsonStruct(c *gin.Context, rules map[string]govalidate.FilterItem, obj interface{}) (int32, error) {
+func BindJsonStruct(c *gin.Context, rules map[string]validator.FilterItem, obj interface{}) (int32, error) {
 	res, errCode, err := BindJsonMap(c, rules)
 	if err != nil {
 		return 0, err
@@ -44,12 +45,13 @@ func BindJsonStruct(c *gin.Context, rules map[string]govalidate.FilterItem, obj 
 }
 
 // BindQueryMap 解析Query部分参数
-func BindQueryMap(c *gin.Context, rules map[string]govalidate.FilterItem) (map[string]interface{}, int32, error) {
+func BindQueryMap(c *gin.Context, rules map[string]validator.FilterItem) (map[string]interface{}, int32, error) {
 	tmpRes := make(map[string]interface{})
 	values := c.Request.URL.Query()
 	for k, v := range values {
 		if len(v) == 1 {
 			tmpRes[k] = v[0]
+			continue
 		}
 		tmpRes[k] = v
 	}
@@ -61,8 +63,42 @@ func BindQueryMap(c *gin.Context, rules map[string]govalidate.FilterItem) (map[s
 }
 
 // BindQueryStruct 解析Query参数
-func BindQueryStruct(c *gin.Context, rules map[string]govalidate.FilterItem, obj interface{}) (int32, error) {
+func BindQueryStruct(c *gin.Context, rules map[string]validator.FilterItem, obj interface{}) (int32, error) {
 	res, errCode, err := BindQueryMap(c, rules)
+	if err != nil {
+		return 0, err
+	}
+	err = mapDecode(res, obj)
+	if err != nil {
+		return 0, err
+	}
+	return errCode, nil
+}
+
+// BindFormMap 解析form数据
+func BindFormMap(c *gin.Context, rules map[string]validator.FilterItem) (map[string]interface{}, int32, error) {
+	if err := c.Request.ParseForm(); err != nil {
+		return nil, 0, err
+	}
+	tmpRes := make(map[string]interface{})
+	values := c.Request.PostForm
+	for k, v := range values {
+		if len(v) == 1 {
+			tmpRes[k] = v[0]
+			continue
+		}
+		tmpRes[k] = v
+	}
+	res, errCode, err := govalidate.Validate(tmpRes, rules)
+	if err != nil {
+		return nil, 0, err
+	}
+	return res, errCode, nil
+}
+
+// BindFormStruct 解析Form参数
+func BindFormStruct(c *gin.Context, rules map[string]validator.FilterItem, obj interface{}) (int32, error) {
+	res, errCode, err := BindFormMap(c, rules)
 	if err != nil {
 		return 0, err
 	}
