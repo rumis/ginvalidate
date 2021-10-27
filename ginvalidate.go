@@ -16,6 +16,7 @@ func BindJsonMap(c *gin.Context, rules map[string]validator.FilterItem) (map[str
 		return nil, 0, errors.New("不支持的Content-Type")
 	}
 	defer c.Request.Body.Close()
+
 	decoder := json.NewDecoder(c.Request.Body)
 	decoder.UseNumber()
 	tmpRes := make(map[string]interface{})
