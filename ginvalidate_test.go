@@ -119,9 +119,9 @@ func TestBindJSON(t *testing.T) {
 		t.Error("dotint to int slice error")
 	}
 
-	// if out.Page != 101 {
-	// 	t.Error("optional default value error")
-	// }
+	if out.Page != 101 {
+		t.Error("optional default value error")
+	}
 
 }
 
