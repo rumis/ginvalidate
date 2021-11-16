@@ -54,18 +54,18 @@ type Resp struct {
 
 var router *gin.Engine
 
-var rules = map[string]V.FilterItem{
-	"name":     R.Filter([]V.Validator{V.Required()}),
-	"ids":      R.Filter([]V.Validator{V.Required(), V.DotInt(), V.Dotint2Slice(), V.IntSlice([]E.IntExecutor{E.Between(1, 100)})}),
-	"grade":    R.Filter([]V.Validator{V.Required(), V.Int(), V.Between(1, 100)}),
-	"subjects": R.Filter([]V.Validator{V.Required(), V.IntSlice()}),
-	"ctime":    R.Filter([]V.Validator{V.Required(), V.Datetime()}),
-	"email":    R.Filter([]V.Validator{V.Required(), V.Email()}),
-	"phone":    R.Filter([]V.Validator{V.Required(), V.Phone()}),
-	"stat":     R.Filter([]V.Validator{V.Required(), V.EnumInt([]int{1, 2, 3, 4, 5})}),
-	"school":   R.Filter([]V.Validator{V.Required(), V.Int()}),
-	"cname":    R.Filter([]V.Validator{V.Required(), V.StringSlice()}),
-	"page":     R.Filter([]V.Validator{V.Optional(101), V.Int()}),
+var rules = []V.FilterItem{
+	R.NewFilter("name", []V.Validator{V.Required()}),
+	R.NewFilter("ids", []V.Validator{V.Required(), V.DotInt(), V.Dotint2Slice(), V.IntSlice([]E.IntExecutor{E.Between(1, 100)})}),
+	R.NewFilter("grade", []V.Validator{V.Required(), V.Int(), V.Between(1, 100)}),
+	R.NewFilter("subjects", []V.Validator{V.Required(), V.IntSlice()}),
+	R.NewFilter("ctime", []V.Validator{V.Required(), V.Datetime()}),
+	R.NewFilter("email", []V.Validator{V.Required(), V.Email()}),
+	R.NewFilter("phone", []V.Validator{V.Required(), V.Phone()}),
+	R.NewFilter("stat", []V.Validator{V.Required(), V.EnumInt([]int{1, 2, 3, 4, 5})}),
+	R.NewFilter("school", []V.Validator{V.Required(), V.Int()}),
+	R.NewFilter("cname", []V.Validator{V.Required(), V.StringSlice()}),
+	R.NewFilter("page", []V.Validator{V.Optional(101), V.Int()}),
 }
 
 func init() {

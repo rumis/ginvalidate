@@ -11,7 +11,7 @@ import (
 
 // BindJsonMap 解析请求参数
 // Content-type:application/json
-func BindJsonMap(c *gin.Context, rules map[string]validator.FilterItem) (map[string]interface{}, int32, error) {
+func BindJsonMap(c *gin.Context, rules []validator.FilterItem) (map[string]interface{}, int32, error) {
 	if c.ContentType() != "application/json" {
 		return nil, 0, errors.New("不支持的Content-Type")
 	}
@@ -33,7 +33,7 @@ func BindJsonMap(c *gin.Context, rules map[string]validator.FilterItem) (map[str
 
 // BindJsonStruct 返回值为对象
 // Content-type:application/json
-func BindJsonStruct(c *gin.Context, rules map[string]validator.FilterItem, obj interface{}) (int32, error) {
+func BindJsonStruct(c *gin.Context, rules []validator.FilterItem, obj interface{}) (int32, error) {
 	res, errCode, err := BindJsonMap(c, rules)
 	if err != nil {
 		return 0, err
@@ -46,7 +46,7 @@ func BindJsonStruct(c *gin.Context, rules map[string]validator.FilterItem, obj i
 }
 
 // BindQueryMap 解析Query部分参数
-func BindQueryMap(c *gin.Context, rules map[string]validator.FilterItem) (map[string]interface{}, int32, error) {
+func BindQueryMap(c *gin.Context, rules []validator.FilterItem) (map[string]interface{}, int32, error) {
 	tmpRes := make(map[string]interface{})
 	values := c.Request.URL.Query()
 	for k, v := range values {
@@ -64,7 +64,7 @@ func BindQueryMap(c *gin.Context, rules map[string]validator.FilterItem) (map[st
 }
 
 // BindQueryStruct 解析Query参数
-func BindQueryStruct(c *gin.Context, rules map[string]validator.FilterItem, obj interface{}) (int32, error) {
+func BindQueryStruct(c *gin.Context, rules []validator.FilterItem, obj interface{}) (int32, error) {
 	res, errCode, err := BindQueryMap(c, rules)
 	if err != nil {
 		return 0, err
@@ -77,7 +77,7 @@ func BindQueryStruct(c *gin.Context, rules map[string]validator.FilterItem, obj 
 }
 
 // BindFormMap 解析form数据
-func BindFormMap(c *gin.Context, rules map[string]validator.FilterItem) (map[string]interface{}, int32, error) {
+func BindFormMap(c *gin.Context, rules []validator.FilterItem) (map[string]interface{}, int32, error) {
 	if err := c.Request.ParseForm(); err != nil {
 		return nil, 0, err
 	}
@@ -98,7 +98,7 @@ func BindFormMap(c *gin.Context, rules map[string]validator.FilterItem) (map[str
 }
 
 // BindFormStruct 解析Form参数
-func BindFormStruct(c *gin.Context, rules map[string]validator.FilterItem, obj interface{}) (int32, error) {
+func BindFormStruct(c *gin.Context, rules []validator.FilterItem, obj interface{}) (int32, error) {
 	res, errCode, err := BindFormMap(c, rules)
 	if err != nil {
 		return 0, err
