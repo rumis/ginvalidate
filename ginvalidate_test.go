@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/go-querystring/query"
+	"github.com/hetiansu5/urlquery"
 	"github.com/mitchellh/mapstructure"
 	R "github.com/rumis/govalidate"
 	E "github.com/rumis/govalidate/executor"
@@ -78,17 +78,17 @@ func init() {
 
 func TestBindJSON(t *testing.T) {
 
-	s1 := SlideReq{
-		Name:     "课件",
-		Ids:      "1,2,3",
-		Grade:    2,
-		Subjects: []int{3, 4, 12},
-		Ctime:    time.Now().Format("2006-01-02 15:04:05"),
-		Email:    "liumurong1@tal.com",
-		Phone:    "15810562936",
-		Stat:     3,
-		School:   1,
-		Cname:    []string{"a", "b", "c"},
+	s1 := map[string]interface{}{
+		"name":     "课件",
+		"ids":      "1,2,3",
+		"grade":    2,
+		"subjects": []int{3, 4, 12},
+		"ctime":    time.Now().Format("2006-01-02 15:04:05"),
+		"email":    "liumurong1@tal.com",
+		"phone":    "15810562936",
+		"stat":     3,
+		"school":   1,
+		"cname":    []string{"a", "b", "c"},
 	}
 	s1Byte, _ := json.Marshal(s1)
 
@@ -112,7 +112,7 @@ func TestBindJSON(t *testing.T) {
 	json.Unmarshal(body, &resp)
 	var out SlideResp
 	mapstructure.Decode(resp.Data, &out)
-	if out.Name != s1.Name {
+	if out.Name != "课件" {
 		t.Error("error")
 	}
 	if out.Ids[2] != 3 {
@@ -127,23 +127,26 @@ func TestBindJSON(t *testing.T) {
 
 func TestFormJSON(t *testing.T) {
 
-	s1 := SlideReq{
-		Name:     "课件",
-		Ids:      "1,2,3",
-		Grade:    2,
-		Subjects: []int{3, 4, 12},
-		Ctime:    time.Now().Format("2006-01-02 15:04:05"),
-		Email:    "liumurong1@tal.com",
-		Phone:    "15810562936",
-		Stat:     3,
-		School:   1,
-		Cname:    []string{"a", "b", "c"},
+	s1 := map[string]interface{}{
+		"name":     "课件",
+		"ids":      "1,2,3",
+		"grade":    2,
+		"subjects": []int{3, 4, 12},
+		"ctime":    time.Now().Format("2006-01-02 15:04:05"),
+		"email":    "liumurong1@tal.com",
+		"phone":    "15810562936",
+		"stat":     3,
+		"school":   1,
+		"cname":    []string{"a", "b", "c"},
 	}
 
-	vals, _ := query.Values(s1)
-	str := vals.Encode()
+	// vals, _ := query.Values(s1)
+	bs, err := urlquery.Marshal(s1)
+	if err != nil {
+		t.Error("map convent to query string error")
+	}
 
-	req := httptest.NewRequest("POST", "/form", strings.NewReader(str))
+	req := httptest.NewRequest("POST", "/form", strings.NewReader(string(bs)))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	w := httptest.NewRecorder()
@@ -163,7 +166,7 @@ func TestFormJSON(t *testing.T) {
 	json.Unmarshal(body, &resp)
 	var out SlideResp
 	mapstructure.Decode(resp.Data, &out)
-	if out.Name != s1.Name {
+	if out.Name != "课件" {
 		t.Error("error")
 	}
 	if out.Ids[2] != 3 {
@@ -174,23 +177,22 @@ func TestFormJSON(t *testing.T) {
 
 func TestQueryJSON(t *testing.T) {
 
-	s1 := SlideReq{
-		Name:     "课件",
-		Ids:      "1,2,3",
-		Grade:    2,
-		Subjects: []int{3, 4, 12},
-		Ctime:    time.Now().Format("2006-01-02 15:04:05"),
-		Email:    "liumurong1@tal.com",
-		Phone:    "15810562936",
-		Stat:     3,
-		School:   1,
-		Cname:    []string{"a", "b", "c"},
+	s1 := map[string]interface{}{
+		"name":     "课件",
+		"ids":      "1,2,3",
+		"grade":    2,
+		"subjects": []int{3, 4, 12},
+		"ctime":    time.Now().Format("2006-01-02 15:04:05"),
+		"email":    "liumurong1@tal.com",
+		"phone":    "15810562936",
+		"stat":     3,
+		"school":   1,
+		"cname":    []string{"a", "b", "c"},
 	}
 
-	vals, _ := query.Values(s1)
-	str := vals.Encode()
+	str, _ := urlquery.Marshal(s1)
 
-	req := httptest.NewRequest("POST", "/query?"+str, nil)
+	req := httptest.NewRequest("POST", "/query?"+string(str), nil)
 
 	w := httptest.NewRecorder()
 	// 调用相应的handler接口
@@ -209,7 +211,7 @@ func TestQueryJSON(t *testing.T) {
 	json.Unmarshal(body, &resp)
 	var out SlideResp
 	mapstructure.Decode(resp.Data, &out)
-	if out.Name != s1.Name {
+	if out.Name != "课件" {
 		t.Error("error")
 	}
 	if out.Ids[2] != 3 {

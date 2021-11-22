@@ -3,6 +3,7 @@ package ginvalidate
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rumis/govalidate"
@@ -50,6 +51,7 @@ func BindQueryMap(c *gin.Context, rules []validator.FilterItem) (map[string]inte
 	tmpRes := make(map[string]interface{})
 	values := c.Request.URL.Query()
 	for k, v := range values {
+		k = strings.TrimRight(k, "[]")
 		if len(v) == 1 {
 			tmpRes[k] = v[0]
 			continue
@@ -84,6 +86,7 @@ func BindFormMap(c *gin.Context, rules []validator.FilterItem) (map[string]inter
 	tmpRes := make(map[string]interface{})
 	values := c.Request.PostForm
 	for k, v := range values {
+		k = strings.TrimRight(k, "[]")
 		if len(v) == 1 {
 			tmpRes[k] = v[0]
 			continue
