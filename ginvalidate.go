@@ -3,6 +3,7 @@ package ginvalidate
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -22,7 +23,7 @@ func BindJsonMap(c *gin.Context, rules []validator.FilterItem) (map[string]inter
 	decoder.UseNumber()
 	tmpRes := make(map[string]interface{})
 	err := decoder.Decode(&tmpRes)
-	if err != nil {
+	if err != nil && !errors.Is(err, io.EOF) {
 		return nil, 0, err
 	}
 	res, errCode, err := govalidate.Validate(tmpRes, rules)
