@@ -14,9 +14,6 @@ import (
 // BindJsonMap 解析请求参数
 // Content-type:application/json
 func BindJsonMap(c *gin.Context, rules []validator.FilterItem) (map[string]interface{}, int32, error) {
-	if c.ContentType() != "application/json" {
-		return nil, 0, errors.New("不支持的Content-Type")
-	}
 	defer c.Request.Body.Close()
 
 	decoder := json.NewDecoder(c.Request.Body)
