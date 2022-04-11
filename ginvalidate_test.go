@@ -72,6 +72,7 @@ func init() {
 	router = gin.Default()
 
 	router.POST("/json", jsonHandler)
+	router.POST("/jsonraw", jsonRawErrorHandler)
 	router.POST("/form", formHandler)
 	router.POST("/query", queryHandler)
 }
@@ -123,6 +124,56 @@ func TestBindJSON(t *testing.T) {
 		t.Error("optional default value error")
 	}
 
+}
+
+// 测试校验失败返回参数原始值
+func TestBindJSONRaw(t *testing.T) {
+
+	s1 := map[string]interface{}{
+		"ids":      "1,2,3",
+		"grade":    2,
+		"subjects": []int{3, 4, 12},
+		"ctime":    time.Now().Format("2006-01-02 15:04:05"),
+		"email":    "liumurong1@tal.com",
+		"phone":    "15810562936",
+		"stat":     3,
+		"school":   1,
+		"cname":    []string{"a", "b", "c"},
+	}
+	s1Byte, _ := json.Marshal(s1)
+
+	req := httptest.NewRequest("POST", "/jsonraw", bytes.NewReader(s1Byte))
+	req.Header.Add("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	// 调用相应的handler接口
+	router.ServeHTTP(w, req)
+
+	if w.Code != 200 {
+		t.Errorf("code error: %d", w.Code)
+	}
+
+	res := w.Result()
+	defer res.Body.Close()
+
+	body, _ := ioutil.ReadAll(res.Body)
+
+	var resp Resp
+	json.Unmarshal(body, &resp)
+	result, _ := resp.Data.(map[string]interface{})
+
+	if email, ok := result["email"]; !ok {
+		t.Error("validate error response column [email] not exist")
+		if es, ok := email.(string); !ok || es != "liumurong1@tal.com" {
+			t.Error("validate error response column [email] type error")
+		}
+	}
+	if ids, ok := result["ids"]; !ok {
+		t.Error("validate error response column [ids] not exist")
+		if eids, ok := ids.(string); !ok || eids != "liumurong1@tal.com" {
+			t.Error("validate error response column [ids] type error")
+		}
+	}
 }
 
 func TestFormJSON(t *testing.T) {
@@ -229,6 +280,26 @@ func jsonHandler(c *gin.Context) {
 			Code: int(code),
 			Msg:  err.Error(),
 			Data: gin.H{},
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Resp{
+		Code: int(code),
+		Msg:  "",
+		Data: s,
+	})
+}
+
+// JSON传参
+// 发生错误时返回参数原始内容
+func jsonRawErrorHandler(c *gin.Context) {
+	var s SlideResp
+	code, raw, err := BindJsonStructRaw(c, rules, &s)
+	if err != nil {
+		c.JSON(http.StatusOK, Resp{
+			Code: int(code),
+			Msg:  err.Error(),
+			Data: raw,
 		})
 		return
 	}

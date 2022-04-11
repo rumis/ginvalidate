@@ -21,11 +21,11 @@ func BindJsonMap(c *gin.Context, rules []validator.FilterItem) (map[string]inter
 	tmpRes := make(map[string]interface{})
 	err := decoder.Decode(&tmpRes)
 	if err != nil && !errors.Is(err, io.EOF) {
-		return nil, 0, err
+		return tmpRes, 0, err
 	}
 	res, errCode, err := govalidate.Validate(tmpRes, rules)
 	if err != nil {
-		return nil, 0, err
+		return tmpRes, 0, err
 	}
 	return res, errCode, nil
 }
@@ -44,6 +44,21 @@ func BindJsonStruct(c *gin.Context, rules []validator.FilterItem, obj interface{
 	return errCode, nil
 }
 
+// BindJsonStructRaw 返回值为对象
+// 如果校验失败，返回原始数据内容
+// Content-type:application/json
+func BindJsonStructRaw(c *gin.Context, rules []validator.FilterItem, obj interface{}) (int32, interface{}, error) {
+	res, errCode, err := BindJsonMap(c, rules)
+	if err != nil {
+		return 0, res, err
+	}
+	err = mapDecode(res, obj)
+	if err != nil {
+		return 0, res, err
+	}
+	return errCode, nil, nil
+}
+
 // BindQueryMap 解析Query部分参数
 func BindQueryMap(c *gin.Context, rules []validator.FilterItem) (map[string]interface{}, int32, error) {
 	tmpRes := make(map[string]interface{})
@@ -58,7 +73,7 @@ func BindQueryMap(c *gin.Context, rules []validator.FilterItem) (map[string]inte
 	}
 	res, errCode, err := govalidate.Validate(tmpRes, rules)
 	if err != nil {
-		return nil, 0, err
+		return res, 0, err
 	}
 	return res, errCode, nil
 }
@@ -74,6 +89,20 @@ func BindQueryStruct(c *gin.Context, rules []validator.FilterItem, obj interface
 		return 0, err
 	}
 	return errCode, nil
+}
+
+// BindQueryStructRaw 解析Query参数
+// 若解析失败，返回原始数据内容
+func BindQueryStructRaw(c *gin.Context, rules []validator.FilterItem, obj interface{}) (int32, interface{}, error) {
+	res, errCode, err := BindQueryMap(c, rules)
+	if err != nil {
+		return 0, res, err
+	}
+	err = mapDecode(res, obj)
+	if err != nil {
+		return 0, res, err
+	}
+	return errCode, nil, nil
 }
 
 // BindFormMap 解析form数据
@@ -93,7 +122,7 @@ func BindFormMap(c *gin.Context, rules []validator.FilterItem) (map[string]inter
 	}
 	res, errCode, err := govalidate.Validate(tmpRes, rules)
 	if err != nil {
-		return nil, 0, err
+		return tmpRes, 0, err
 	}
 	return res, errCode, nil
 }
@@ -109,4 +138,18 @@ func BindFormStruct(c *gin.Context, rules []validator.FilterItem, obj interface{
 		return 0, err
 	}
 	return errCode, nil
+}
+
+// BindFormStructRaw 解析Form参数
+// 若校验失败，返回map格式的原始数据
+func BindFormStructRaw(c *gin.Context, rules []validator.FilterItem, obj interface{}) (int32, interface{}, error) {
+	res, errCode, err := BindFormMap(c, rules)
+	if err != nil {
+		return 0, res, err
+	}
+	err = mapDecode(res, obj)
+	if err != nil {
+		return 0, res, err
+	}
+	return errCode, nil, nil
 }
