@@ -54,7 +54,7 @@ type Resp struct {
 
 var router *gin.Engine
 
-var rules = []V.FilterItem{
+var rules = []V.Filter{
 	R.NewFilter("name", []V.Validator{V.Required()}),
 	R.NewFilter("ids", []V.Validator{V.Required(), V.DotInt(), V.Dotint2Slice(), V.IntSlice([]E.IntExecutor{E.Between(1, 100)})}),
 	R.NewFilter("grade", []V.Validator{V.Required(), V.Int(), V.Between(1, 100)}),
