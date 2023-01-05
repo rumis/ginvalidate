@@ -17,6 +17,7 @@ import (
 func BindJsonMap(c *gin.Context, rules []validator.Filter) (map[string]interface{}, int32, error) {
 	defer c.Request.Body.Close()
 
+	// 解析body
 	decoder := json.NewDecoder(c.Request.Body)
 	decoder.UseNumber()
 	tmpRes := make(map[string]interface{})
@@ -24,6 +25,11 @@ func BindJsonMap(c *gin.Context, rules []validator.Filter) (map[string]interface
 	if err != nil && !errors.Is(err, io.EOF) {
 		return tmpRes, 0, err
 	}
+	// 解析header参数
+	for k, v := range c.Request.Header {
+		tmpRes[strings.ToLower(k)] = strings.Join(v, ",")
+	}
+	// 校验
 	res, errCode, err := govalidate.Validate(tmpRes, rules)
 	if err != nil {
 		return tmpRes, 0, err
@@ -35,7 +41,7 @@ func BindJsonMap(c *gin.Context, rules []validator.Filter) (map[string]interface
 // Content-type:application/json
 func BindJsonMapContext(c *gin.Context, rules []validator.Filter) (map[string]interface{}, int32, error) {
 	defer c.Request.Body.Close()
-
+	// 解析body参数
 	decoder := json.NewDecoder(c.Request.Body)
 	decoder.UseNumber()
 	tmpRes := make(map[string]interface{})
@@ -43,6 +49,11 @@ func BindJsonMapContext(c *gin.Context, rules []validator.Filter) (map[string]in
 	if err != nil && !errors.Is(err, io.EOF) {
 		return tmpRes, 0, err
 	}
+	// 解析header参数
+	for k, v := range c.Request.Header {
+		tmpRes[strings.ToLower(k)] = strings.Join(v, ",")
+	}
+	// 校验
 	res, errCode, err := govalidate.Validate1(toContext(c), tmpRes, rules)
 	if err != nil {
 		return tmpRes, 0, err
@@ -111,6 +122,7 @@ func BindJsonStructRawContext(c *gin.Context, rules []validator.Filter, obj inte
 // BindQueryMap 解析Query部分参数
 func BindQueryMap(c *gin.Context, rules []validator.Filter) (map[string]interface{}, int32, error) {
 	tmpRes := make(map[string]interface{})
+	// 解析查询参数
 	values := c.Request.URL.Query()
 	for k, v := range values {
 		k = strings.TrimRight(k, "[]")
@@ -120,6 +132,11 @@ func BindQueryMap(c *gin.Context, rules []validator.Filter) (map[string]interfac
 		}
 		tmpRes[k] = v
 	}
+	// 解析header参数
+	for k, v := range c.Request.Header {
+		tmpRes[strings.ToLower(k)] = strings.Join(v, ",")
+	}
+	// 校验
 	res, errCode, err := govalidate.Validate(tmpRes, rules)
 	if err != nil {
 		return res, 0, err
@@ -130,6 +147,7 @@ func BindQueryMap(c *gin.Context, rules []validator.Filter) (map[string]interfac
 // BindQueryMapContent 解析Query部分参数
 func BindQueryMapContext(c *gin.Context, rules []validator.Filter) (map[string]interface{}, int32, error) {
 	tmpRes := make(map[string]interface{})
+	// 解析查询参数
 	values := c.Request.URL.Query()
 	for k, v := range values {
 		k = strings.TrimRight(k, "[]")
@@ -139,6 +157,11 @@ func BindQueryMapContext(c *gin.Context, rules []validator.Filter) (map[string]i
 		}
 		tmpRes[k] = v
 	}
+	// 解析Header参数
+	for k, v := range c.Request.Header {
+		tmpRes[strings.ToLower(k)] = strings.Join(v, ",")
+	}
+	// 校验
 	res, errCode, err := govalidate.Validate1(toContext(c), tmpRes, rules)
 	if err != nil {
 		return res, 0, err
@@ -227,6 +250,7 @@ func BindFormMapContext(c *gin.Context, rules []validator.Filter) (map[string]in
 	if err := c.Request.ParseForm(); err != nil {
 		return nil, 0, err
 	}
+	// 解析form
 	tmpRes := make(map[string]interface{})
 	values := c.Request.PostForm
 	for k, v := range values {
@@ -237,6 +261,11 @@ func BindFormMapContext(c *gin.Context, rules []validator.Filter) (map[string]in
 		}
 		tmpRes[k] = v
 	}
+	// 解析Header参数
+	for k, v := range c.Request.Header {
+		tmpRes[strings.ToLower(k)] = strings.Join(v, ",")
+	}
+	// 校验
 	res, errCode, err := govalidate.Validate1(toContext(c), tmpRes, rules)
 	if err != nil {
 		return tmpRes, 0, err

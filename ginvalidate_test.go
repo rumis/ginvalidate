@@ -44,6 +44,7 @@ type SlideResp struct {
 	School   int       `json:"school"`
 	Cname    []string  `json:"cname"`
 	Page     int       `json:"page"`
+	Data     int       `json:"data"`
 }
 
 type Resp struct {
@@ -66,6 +67,7 @@ var rules = []V.Filter{
 	R.NewFilter("school", []V.Validator{V.Required(), V.Int()}),
 	R.NewFilter("cname", []V.Validator{V.Required(), V.StringSlice()}),
 	R.NewFilter("page", []V.Validator{V.Optional(101), V.Int()}),
+	R.NewFilter("x-data-id", []V.Validator{V.Optional(), V.Int(), V.ResetKey("data")}),
 }
 
 func init() {
@@ -95,6 +97,7 @@ func TestBindJSON(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/json", bytes.NewReader(s1Byte))
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("x-data-ID", "1")
 
 	w := httptest.NewRecorder()
 	// 调用相应的handler接口
@@ -114,14 +117,18 @@ func TestBindJSON(t *testing.T) {
 	var out SlideResp
 	mapstructure.Decode(resp.Data, &out)
 	if out.Name != "课件" {
-		t.Error("error")
+		t.Fatal("error")
 	}
 	if out.Ids[2] != 3 {
-		t.Error("dotint to int slice error")
+		t.Fatal("dotint to int slice error")
 	}
 
 	if out.Page != 101 {
-		t.Error("optional default value error")
+		t.Fatal("optional default value error")
+	}
+
+	if out.Data != 1 {
+		t.Fatal("header value error")
 	}
 
 }
