@@ -121,23 +121,19 @@ func BindJsonStructRawContext(c *gin.Context, rules []validator.Filter, obj inte
 
 // BindQueryMap 解析Query部分参数
 func BindQueryMap(c *gin.Context, rules []validator.Filter) (map[string]interface{}, int32, error) {
-	tmpRes := make(map[string]interface{})
+	pCol := NewParamsCollection()
 	// 解析查询参数
 	values := c.Request.URL.Query()
 	for k, v := range values {
-		k = strings.TrimRight(k, "[]")
-		if len(v) == 1 {
-			tmpRes[k] = v[0]
-			continue
-		}
-		tmpRes[k] = v
+		k = FormatKey(k)
+		pCol.Set(k, v)
 	}
 	// 解析header参数
 	for k, v := range c.Request.Header {
-		tmpRes[strings.ToLower(k)] = strings.Join(v, ",")
+		pCol.Set(strings.ToLower(k), v)
 	}
 	// 校验
-	res, errCode, err := govalidate.Validate(tmpRes, rules)
+	res, errCode, err := govalidate.Validate(pCol.To(), rules)
 	if err != nil {
 		return res, 0, err
 	}
@@ -146,23 +142,19 @@ func BindQueryMap(c *gin.Context, rules []validator.Filter) (map[string]interfac
 
 // BindQueryMapContent 解析Query部分参数
 func BindQueryMapContext(c *gin.Context, rules []validator.Filter) (map[string]interface{}, int32, error) {
-	tmpRes := make(map[string]interface{})
+	pCol := NewParamsCollection()
 	// 解析查询参数
 	values := c.Request.URL.Query()
 	for k, v := range values {
-		k = strings.TrimRight(k, "[]")
-		if len(v) == 1 {
-			tmpRes[k] = v[0]
-			continue
-		}
-		tmpRes[k] = v
+		k = FormatKey(k)
+		pCol.Set(k, v)
 	}
 	// 解析Header参数
 	for k, v := range c.Request.Header {
-		tmpRes[strings.ToLower(k)] = strings.Join(v, ",")
+		pCol.Set(strings.ToLower(k), v)
 	}
 	// 校验
-	res, errCode, err := govalidate.Validate1(toContext(c), tmpRes, rules)
+	res, errCode, err := govalidate.Validate1(toContext(c), pCol.To(), rules)
 	if err != nil {
 		return res, 0, err
 	}
@@ -228,19 +220,30 @@ func BindFormMap(c *gin.Context, rules []validator.Filter) (map[string]interface
 	if err := c.Request.ParseForm(); err != nil {
 		return nil, 0, err
 	}
-	tmpRes := make(map[string]interface{})
+	pCol := NewParamsCollection()
 	values := c.Request.PostForm
 	for k, v := range values {
-		k = strings.TrimRight(k, "[]")
-		if len(v) == 1 {
-			tmpRes[k] = v[0]
-			continue
-		}
-		tmpRes[k] = v
+		k = FormatKey(k)
+		pCol.Set(k, v)
 	}
-	res, errCode, err := govalidate.Validate(tmpRes, rules)
+
+	// 解析MultipartForm
+	err := c.Request.ParseMultipartForm(10240)
+	if err == nil {
+		for k, v := range c.Request.MultipartForm.Value {
+			k = FormatKey(k)
+			pCol.Set(k, v)
+		}
+	}
+
+	// 解析Header参数
+	for k, v := range c.Request.Header {
+		pCol.Set(strings.ToLower(k), v)
+	}
+
+	res, errCode, err := govalidate.Validate(pCol.To(), rules)
 	if err != nil {
-		return tmpRes, 0, err
+		return pCol.To(), 0, err
 	}
 	return res, errCode, nil
 }
@@ -251,24 +254,28 @@ func BindFormMapContext(c *gin.Context, rules []validator.Filter) (map[string]in
 		return nil, 0, err
 	}
 	// 解析form
-	tmpRes := make(map[string]interface{})
+	pCol := NewParamsCollection()
 	values := c.Request.PostForm
 	for k, v := range values {
-		k = strings.TrimRight(k, "[]")
-		if len(v) == 1 {
-			tmpRes[k] = v[0]
-			continue
+		k = FormatKey(k)
+		pCol.Set(k, v)
+	}
+	// 解析MultipartForm
+	err := c.Request.ParseMultipartForm(10240)
+	if err == nil {
+		for k, v := range c.Request.MultipartForm.Value {
+			k = FormatKey(k)
+			pCol.Set(k, v)
 		}
-		tmpRes[k] = v
 	}
 	// 解析Header参数
 	for k, v := range c.Request.Header {
-		tmpRes[strings.ToLower(k)] = strings.Join(v, ",")
+		pCol.Set(strings.ToLower(k), v)
 	}
 	// 校验
-	res, errCode, err := govalidate.Validate1(toContext(c), tmpRes, rules)
+	res, errCode, err := govalidate.Validate1(toContext(c), pCol.To(), rules)
 	if err != nil {
-		return tmpRes, 0, err
+		return pCol.To(), 0, err
 	}
 	return res, errCode, nil
 }

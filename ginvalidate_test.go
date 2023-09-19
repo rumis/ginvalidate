@@ -3,7 +3,9 @@ package ginvalidate
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -53,6 +55,11 @@ type Resp struct {
 	Data interface{} `json:"data"`
 }
 
+type MultiResp struct {
+	Name string   `json:"name"`
+	Ids  []string `json:"ids"`
+}
+
 var router *gin.Engine
 
 var rules = []V.Filter{
@@ -70,12 +77,18 @@ var rules = []V.Filter{
 	R.NewFilter("x-data-id", []V.Validator{V.Optional(), V.Int(), V.ResetKey("data")}),
 }
 
+var multiRules = []V.Filter{
+	R.NewFilter("name", []V.Validator{V.Required()}),
+	R.NewFilter("ids", []V.Validator{V.Required()}),
+}
+
 func init() {
 	router = gin.Default()
 
 	router.POST("/json", jsonHandler)
 	router.POST("/jsonraw", jsonRawErrorHandler)
 	router.POST("/form", formHandler)
+	router.POST("/multiform", multiFormHandler)
 	router.POST("/query", queryHandler)
 }
 
@@ -233,6 +246,52 @@ func TestFormJSON(t *testing.T) {
 
 }
 
+func TestMultiFormJSON(t *testing.T) {
+
+	s1 := map[string]interface{}{
+		"name":   "课件",
+		"ids[0]": "1",
+		// "ids[]": "2",
+	}
+
+	buf := new(bytes.Buffer)
+	writer := multipart.NewWriter(buf)
+
+	for k, v := range s1 {
+		writer.WriteField(k, fmt.Sprint(v))
+	}
+	writer.WriteField("ids[1]", "2")
+
+	writer.Close()
+
+	req := httptest.NewRequest("POST", "/multiform", buf)
+	req.Header.Add("Content-Type", writer.FormDataContentType())
+
+	w := httptest.NewRecorder()
+	// 调用相应的handler接口
+	router.ServeHTTP(w, req)
+
+	if w.Code != 200 {
+		t.Errorf("code error: %d", w.Code)
+	}
+
+	res := w.Result()
+	defer res.Body.Close()
+
+	body, _ := ioutil.ReadAll(res.Body)
+
+	var resp Resp
+	json.Unmarshal(body, &resp)
+	var out MultiResp
+	mapstructure.Decode(resp.Data, &out)
+	if out.Name != "课件" {
+		t.Error("error")
+	}
+	if out.Ids[1] != "2" {
+		t.Error("multi form parse error")
+	}
+}
+
 func TestQueryJSON(t *testing.T) {
 
 	s1 := map[string]interface{}{
@@ -340,6 +399,25 @@ func queryHandler(c *gin.Context) {
 func formHandler(c *gin.Context) {
 	var s SlideResp
 	code, err := BindFormStruct(c, rules, &s)
+	if err != nil {
+		c.JSON(http.StatusOK, Resp{
+			Code: int(code),
+			Msg:  err.Error(),
+			Data: gin.H{},
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Resp{
+		Code: int(code),
+		Msg:  "",
+		Data: s,
+	})
+}
+
+// multiFormHandler multi form
+func multiFormHandler(c *gin.Context) {
+	var s MultiResp
+	code, err := BindFormStruct(c, multiRules, &s)
 	if err != nil {
 		c.JSON(http.StatusOK, Resp{
 			Code: int(code),

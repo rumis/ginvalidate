@@ -1,6 +1,10 @@
 package ginvalidate
 
-import "github.com/mitchellh/mapstructure"
+import (
+	"regexp"
+
+	"github.com/mitchellh/mapstructure"
+)
 
 // mapDecode map转对象
 func mapDecode(input interface{}, out interface{}) error {
@@ -21,4 +25,11 @@ func mapDecode(input interface{}, out interface{}) error {
 		return err
 	}
 	return nil
+}
+
+// FormatKey 去除数组类参数KEY中的中括号
+func FormatKey(k string) string {
+	reg := regexp.MustCompile(`\[\d*\]`)
+	k = reg.ReplaceAllString(k, "")
+	return k
 }
